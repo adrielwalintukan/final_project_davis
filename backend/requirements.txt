@@ -1,0 +1,18 @@
+# ── Web Framework ──────────────────────────────────────────
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+
+# ── Database (SQLite via SQLAlchemy) ───────────────────────
+sqlalchemy==2.0.40
+aiosqlite==0.21.0          # async SQLite driver
+
+# ── Gemini AI ──────────────────────────────────────────────
+google-generativeai==0.8.5
+
+# ── Utilities ──────────────────────────────────────────────
+python-dotenv==1.1.0       # load .env variables
+pydantic==2.11.3           # data validation (built into FastAPI)
+pydantic-settings==2.9.1   # settings management via .env
+
+# ── CORS / HTTP ────────────────────────────────────────────
+httpx==0.28.1              # async HTTP client (optional, for external calls)
