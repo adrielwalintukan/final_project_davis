@@ -52,7 +52,7 @@ function App() {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Center content */}
-          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+          <div className="flex-1 overflow-y-auto scrollbar-hide p-5 flex flex-col gap-4">
             {/* Metric Cards */}
             <div className="grid grid-cols-4 gap-3.5">
               {metrics.map((m) => <MetricCard key={m.label} {...m} />)}
