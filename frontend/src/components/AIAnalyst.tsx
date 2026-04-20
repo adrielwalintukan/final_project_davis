@@ -13,23 +13,23 @@ interface Message {
 const initialMessages: Message[] = [
   {
     id: 1, role: 'ai',
-    text: "System scan complete. I've detected a ",
-    boldWord: '12.5% revenue spike',
-    suffix: ' correlate with increased Social Media activity in Q1.',
+    text: "Pemindaian sistem selesai. Saya telah mendeteksi ",
+    boldWord: 'lonjakan pendapatan 12,5%',
+    suffix: ' berkorelasi dengan peningkatan aktivitas Media Sosial di Q1.',
     time: '09:41 AM',
   },
-  { id: 2, role: 'user', text: 'Why did spend drop in March?', time: '09:45 AM' },
+  { id: 2, role: 'user', text: 'Mengapa pengeluaran turun di Maret?', time: '09:45 AM' },
   {
     id: 3, role: 'ai',
-    text: 'The March dip was primarily due to a ',
-    boldWord: 'budget reallocation',
-    suffix: ' in the Jakarta Hub, causing a 15% drop in the Display Ads sector.',
-    chip: 'Analyze Jakarta Node',
+    text: 'Penurunan Maret terutama disebabkan oleh ',
+    boldWord: 'realokasi anggaran',
+    suffix: ' di Jakarta Hub, menyebabkan penurunan 15% di sektor Iklan Display.',
+    chip: 'Analisis Node Jakarta',
     time: '09:46 AM',
   },
 ];
 
-const probes = ['Explain this sales trend', 'Forecast Q4 Campaign Growth'];
+const probes = ['Jelaskan tren penjualan ini', 'Prakiraan Pertumbuhan Kampanye Q4'];
 
 const AIAnalyst: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -72,7 +72,7 @@ const AIAnalyst: React.FC = () => {
     setMessages(prev => [
       ...prev,
       { id: Date.now(), role: 'user', text: input, time: now },
-      { id: Date.now() + 1, role: 'ai', text: 'Analyzing your campaign data... Insights will be generated shortly.', time: now },
+      { id: Date.now() + 1, role: 'ai', text: 'Menganalisis data kampanye Anda... Wawasan akan dihasilkan segera.', time: now },
     ]);
     setInput('');
   };
@@ -92,19 +92,19 @@ const AIAnalyst: React.FC = () => {
         {/* Header */}
         <div className="p-4 border-b border-purple-900/20 shrink-0">
           <div className="flex items-center justify-between">
-            <span className="font-['Space_Grotesk'] text-[15px] font-bold text-white">AI Analyst</span>
+            <span className="font-['Space_Grotesk'] text-[15px] font-bold text-white">Analis AI</span>
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-dot shadow-[0_0_6px_rgba(74,222,128,0.7)]" />
           </div>
-          <p className="text-[9px] tracking-[1.5px] uppercase text-[#55556a] mt-0.5">Neural Assistant Active</p>
+          <p className="text-[9px] tracking-[1.5px] uppercase text-[#55556a] mt-0.5">Asisten Neural Aktif</p>
           <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/15 border border-violet-500/30 rounded-lg text-[11px] font-semibold text-violet-300">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_6px_rgba(139,92,246,0.7)]" />
-            Optimization Ready
+            Siap untuk Optimasi
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex border-b border-purple-900/20 shrink-0">
-          {['Conversation', 'Context', 'Variables'].map((tab) => (
+          {['Percakapan', 'Konteks', 'Variabel'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab.toLowerCase())}
@@ -148,7 +148,7 @@ const AIAnalyst: React.FC = () => {
 
         {/* Probes */}
         <div className="px-3.5 py-3 border-t border-purple-900/20 shrink-0">
-          <p className="text-[9px] font-semibold tracking-[1.2px] uppercase text-[#55556a] mb-2">Example Probes</p>
+          <p className="text-[9px] font-semibold tracking-[1.2px] uppercase text-[#55556a] mb-2">Probe Contoh</p>
           {probes.map((p) => (
             <button
               key={p}
@@ -164,7 +164,7 @@ const AIAnalyst: React.FC = () => {
         <div className="px-3.5 pb-3.5 flex items-center gap-2 border-t border-purple-900/20 pt-3 shrink-0">
           <input
             className="flex-1 bg-[#1a1a2e] border border-purple-900/20 rounded-lg px-3 py-2 text-[12px] text-white placeholder-[#55556a] outline-none focus:border-violet-500 transition-colors"
-            placeholder="Ask questions about your data..."
+            placeholder="Tanyakan pertanyaan tentang data Anda..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
