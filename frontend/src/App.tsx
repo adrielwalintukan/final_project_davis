@@ -44,7 +44,7 @@ function App() {
   const [activeNav, setActiveNav] = useState('command');
 
   return (
-    <>
+    <div className="flex h-screen w-full bg-[#0f0f1a] text-white overflow-hidden">
       <Sidebar activeNav={activeNav} onNavChange={setActiveNav} />
 
       <div className="flex-1 flex flex-col overflow-hidden bg-[#0f0f1a]">
@@ -72,7 +72,7 @@ function App() {
           <AIAnalyst />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
