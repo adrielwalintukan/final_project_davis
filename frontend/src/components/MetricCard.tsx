@@ -1,54 +1,68 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface MetricCardProps {
   label: string;
-  value: string;
-  change: string;
-  changeType: 'up' | 'down';
-  changeLabel: string;
+  value: string | number;
   icon: React.ReactNode;
-  bars: number[];
+  subtitle?: string;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({
-  label, value, change, changeType, changeLabel, icon, bars,
-}) => {
-  const maxBar = Math.max(...bars);
+const MetricCard: React.FC<MetricCardProps> = ({ label, value, icon, subtitle }) => {
+  const [displayValue, setDisplayValue] = useState<string | number>(value);
+  const prevValueRef = useRef<number>(0);
+  const requestRef = useRef<number>(null);
+
+  const parseNumber = (val: string | number): number => {
+    if (typeof val === 'number') return val;
+    return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
+  };
+
+  const formatValue = (num: number, original: string | number): string => {
+    const isPercent = typeof original === 'string' && original.includes('%');
+    const isCurrency = typeof original === 'string' && original.includes('$');
+    if (isCurrency) return `$${Math.floor(num).toLocaleString()}`;
+    if (isPercent) return `${num.toFixed(2)}%`;
+    return Math.floor(num).toLocaleString();
+  };
+
+  useEffect(() => {
+    const targetValue = parseNumber(value);
+    const startValue = prevValueRef.current;
+    const duration = 250; // Perpendek durasi menjadi 250ms agar sangat responsif
+    let startTimestamp: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      
+      // Linear transition untuk kecepatan maksimal
+      const currentValue = startValue + (targetValue - startValue) * progress;
+      setDisplayValue(formatValue(currentValue, value));
+
+      if (progress < 1) {
+        requestRef.current = requestAnimationFrame(animate);
+      } else {
+        prevValueRef.current = targetValue;
+      }
+    };
+
+    requestRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, [value]);
+
   return (
-    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-4 flex flex-col gap-2 hover:border-purple-500/40 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] hover:-translate-y-0.5 transition-all duration-250 cursor-default animate-fade-up">
-      {/* Label */}
-      <div className="flex items-center justify-between text-[10px] font-semibold tracking-widest uppercase text-[#55556a]">
-        {label}
-        <span className="w-3.5 h-3.5 text-[#55556a]">{icon}</span>
+    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-4.5 hover:border-violet-500/40 transition-all animate-fade-up">
+      <div className="flex items-start justify-between mb-3">
+        <div className="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+          {icon}
+        </div>
       </div>
-
-      {/* Value */}
-      <div className="font-['Space_Grotesk'] text-2xl font-bold text-white leading-none">{value}</div>
-
-      {/* Change */}
-      <div className={`flex items-center gap-1.5 text-[11px] font-medium ${changeType === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
-        {changeType === 'up' ? (
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-          </svg>
-        ) : (
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>
-          </svg>
-        )}
-        {change}
-        <span className="text-[#55556a] font-normal">{changeLabel}</span>
-      </div>
-
-      {/* Mini Bar Chart */}
-      <div className="flex items-end gap-[3px] h-8 mt-1">
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            className={`flex-1 rounded-sm transition-colors duration-200 ${h === maxBar ? 'bg-violet-500' : 'bg-violet-500/20'}`}
-            style={{ height: `${(h / maxBar) * 100}%` }}
-          />
-        ))}
+      <div>
+        <p className="text-[11px] font-semibold tracking-widest uppercase text-[#55556a] mb-1">{label}</p>
+        <h3 className="font-['Space_Grotesk'] text-2xl font-bold text-white mb-0.5">{displayValue}</h3>
+        {subtitle && <p className="text-[10px] text-[#9090b0] font-medium opacity-80">{subtitle}</p>}
       </div>
     </div>
   );

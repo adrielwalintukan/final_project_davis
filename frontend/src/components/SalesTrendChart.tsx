@@ -1,104 +1,89 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CanvasJSReact from "@canvasjs/react-charts";
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
-const dayData = [];
+interface Props {
+  filters: { startDate: string; endDate: string; category?: string; mode: 'day' | 'month' | 'all' };
+}
 
-const monthData = [];
+const SalesTrendChart: React.FC<Props> = ({ filters }) => {
+  const [activeTab, setActiveTab] = useState<"clicks" | "purchases">("clicks");
+  const [chartData, setChartData] = useState<any>(null);
+  const [opacity, setOpacity] = useState(1);
 
-const SalesTrendChart: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"day" | "month">("month");
+  useEffect(() => {
+    setOpacity(0.5);
+    let url = `http://localhost:8000/api/charts/sales-trend?start_date=${filters.startDate}&end_date=${filters.endDate}`;
+    if (filters.category) url += `&category=${filters.category}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        setChartData(data);
+        setOpacity(1);
+      })
+      .catch((err) => {
+        console.error("Gagal mengambil data tren:", err);
+        setOpacity(1);
+      });
+  }, [filters, activeTab]);
 
   const options = {
     backgroundColor: "transparent",
+    theme: "dark2",
     animationEnabled: true,
-    animationDuration: 800,
-    title: { text: "" },
+    animationDuration: 1000,
     axisX: {
+      title: "Tren Aktivitas",
+      titleFontColor: "#9090b0",
       labelFontColor: "#55556a",
-      labelFontSize: 11,
-      labelFontFamily: "Inter",
-      tickColor: "transparent",
-      lineColor: "rgba(255,255,255,0.06)",
-      gridColor: "transparent",
-      valueFormatString: "MMM",
+      interval: filters.startDate === filters.endDate ? 5 : 7, 
+      labelAngle: -45,
     },
     axisY: {
+      title: activeTab === "clicks" ? "Klik" : "Konversi",
+      titleFontColor: "#9090b0",
       labelFontColor: "#55556a",
-      labelFontSize: 11,
-      labelFontFamily: "Inter",
       gridColor: "rgba(255,255,255,0.05)",
-      gridDashType: "dash",
-      tickColor: "transparent",
-      lineColor: "transparent",
     },
     data: [
       {
-        type: "spline",
-        color: "#8b5cf6",
-        lineThickness: 2.5,
-        markerType: "circle",
-        markerColor: "#8b5cf6",
-        markerSize: 6,
-        markerBorderColor: "#0f0f1a",
-        markerBorderThickness: 2,
-        dataPoints: activeTab === "day" ? dayData : monthData,
+        type: "splineArea",
+        name: activeTab === "clicks" ? "Klik" : "Pembelian",
+        color: activeTab === "clicks" ? "#8b5cf6" : "#22d3ee",
+        fillOpacity: 0.12,
+        dataPoints: chartData ? chartData[activeTab] : [],
       },
     ],
   };
 
   return (
-    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-5 animate-fade-up">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-6 min-h-[480px] flex flex-col">
+      <div className="flex items-start justify-between mb-6 shrink-0">
         <div>
-          <div className="font-['Space_Grotesk'] text-[15px] font-semibold text-white">
-            Tren Penjualan Sepanjang Waktu
-          </div>
-          <div className="text-[11px] text-[#55556a] mt-0.5">
-            Analisis temporal pendapatan kampanye iklan
-          </div>
+          <div className="font-['Space_Grotesk'] text-[16px] font-semibold text-white">Analisis Tren Performa</div>
+          <div className="text-[11px] text-[#55556a] mt-0.5">Menampilkan tren periode terkait</div>
         </div>
-        {/* Tab group */}
         <div className="flex bg-[#14141f] border border-purple-900/20 rounded-lg p-0.5">
-          {(['day', 'month'] as const).map((t) => {
-            const labels = { day: 'Hari', month: 'Bulan' };
-            return (
-              <button
-                key={t}
-                onClick={() => setActiveTab(t)}
-                className={`px-3 py-1 rounded-md text-[11px] font-medium capitalize transition-all cursor-pointer
-                  ${
-                    activeTab === t
-                      ? 'bg-[#1a1a2e] text-violet-400 shadow-sm'
-                      : 'text-[#9090b0] hover:text-white'
-                  }`}
-              >
-                {labels[t as 'day' | 'month']}
-              </button>
-            );
-          })}
-        </div>
-
-          })}
+          {(['clicks', 'purchases'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`px-4 py-1.5 rounded-md text-[11px] font-medium capitalize transition-all duration-300 cursor-pointer
+                ${activeTab === t ? 'bg-[#1a1a2e] text-violet-400 shadow-sm' : 'text-[#9090b0] hover:text-white'}`}
+            >
+              {t === 'clicks' ? 'Klik' : 'Konversi'}
+            </button>
+          ))}
         </div>
       </div>
-
-      {/* Chart - containerProps locks the size so CanvasJS can't overflow */}
-      <div
-        style={{ height: "280px", position: "relative", overflow: "hidden" }}
-      >
-        <CanvasJSChart
-          options={options}
-          containerProps={{
-            style: {
-              width: "100%",
-              height: "280px",
-              position: "relative",
-            },
-          }}
-        />
+      <div className="relative flex-1 transition-opacity duration-500" style={{ height: "380px", opacity: opacity }}>
+        {chartData && (chartData.clicks.length > 0 || chartData.purchases.length > 0) ? (
+          <CanvasJSChart options={options} />
+        ) : (
+          <div className="h-full flex items-center justify-center text-[#55556a] text-xs">Tidak ada data untuk periode ini</div>
+        )}
       </div>
     </div>
   );

@@ -1,68 +1,55 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import CanvasJSReact from "@canvasjs/react-charts";
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
-const dataPoints = [];
+interface Props {
+  filters: { startDate: string; endDate: string; category?: string; mode: 'day' | 'month' | 'all' };
+}
 
-const CampaignDistributionPie: React.FC = () => {
+const CampaignDistributionPie: React.FC<Props> = ({ filters }) => {
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    let url = `http://localhost:8000/api/charts/platform-distribution?start_date=${filters.startDate}&end_date=${filters.endDate}`;
+    if (filters.category) url += `&category=${filters.category}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => setData(data))
+      .catch((err) => console.error("Gagal mengambil distribusi platform:", err));
+  }, [filters]);
+
   const options = {
-    backgroundColor: "transparent",
     animationEnabled: true,
-    animationDuration: 800,
-    title: { text: "" },
-    legend: {
-      fontColor: "#9090b0",
-      fontSize: 12,
-      horizontalAlign: "center",
-      verticalAlign: "bottom",
-      cursor: "pointer",
-    },
+    backgroundColor: "transparent",
+    theme: "dark2",
+    legend: { fontColor: "#9090b0", fontSize: 9, verticalAlign: "center", horizontalAlign: "right" },
     data: [
       {
-        type: "pie",
-        startAngle: -90,
-        centerX: "50%",
-        centerY: "45%",
-        radius: "60%",
+        type: "doughnut",
         showInLegend: true,
-        legendText: "{label}",
-        indexLabel: "{label} - {y}%",
-        indexLabelFontColor: "#ffffff",
-        indexLabelFontSize: 11,
-        indexLabelFontFamily: "Calibri, ui-sans-serif, system-ui, sans-serif",
-        indexLabelPlacement: "outside",
-        dataPoints,
+        indexLabel: "{y}",
+        indexLabelFontColor: "#9090b0",
+        indexLabelFontSize: 9,
+        innerRadius: "65%",
+        radius: "70%",
+        dataPoints: data.map((item, index) => ({
+          ...item,
+          color: index === 0 ? "#8b5cf6" : "#22d3ee",
+        })),
       },
     ],
   };
 
   return (
-    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-5 animate-fade-up">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <div className="font-['Space_Grotesk'] text-[15px] font-semibold text-white">
-            Distribusi Kampanye
-          </div>
-          <div className="text-[11px] text-[#55556a] mt-0.5">
-            Diagram lingkaran dari berbagi pengeluaran kampanye
-          </div>
-        </div>
+    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-5 flex flex-col h-full">
+      <div className="mb-1">
+        <div className="font-['Space_Grotesk'] text-[14px] font-semibold text-white">Platform Market Share</div>
+        <div className="text-[10px] text-[#55556a] mt-0.5">Filter aktif berdasarkan periode</div>
       </div>
-
-      <div
-        style={{ height: "340px", position: "relative", overflow: "visible" }}
-      >
-        <CanvasJSChart
-          options={options}
-          containerProps={{
-            style: {
-              width: "100%",
-              height: "340px",
-              position: "relative",
-            },
-          }}
-        />
+      <div className="relative flex-1 min-h-[150px]">
+        {data.length > 0 ? <CanvasJSChart options={options} /> : <div className="h-full flex items-center justify-center text-[#55556a] text-[9px]">Tidak ada data untuk periode ini</div>}
       </div>
     </div>
   );

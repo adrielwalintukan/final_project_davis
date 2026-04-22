@@ -1,42 +1,75 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import CanvasJSReact from "@canvasjs/react-charts";
 
-const categories = [];
+const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
-const CategoryPerformance: React.FC = () => {
+interface Props {
+  filters: { startDate: string; endDate: string; category?: string; mode: 'day' | 'month' | 'all' };
+}
+
+const CategoryPerformance: React.FC<Props> = ({ filters }) => {
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    let url = `http://localhost:8000/api/charts/category-performance?start_date=${filters.startDate}&end_date=${filters.endDate}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => setData(data))
+      .catch((err) => console.error("Gagal mengambil performa kategori:", err));
+  }, [filters.startDate, filters.endDate]);
+
+  const filteredData = filters.category 
+    ? data.filter(item => item.label === filters.category)
+    : data;
+
+  const options = {
+    animationEnabled: true,
+    animationDuration: 600,
+    theme: "dark2",
+    backgroundColor: "transparent",
+    axisX: { 
+      labelFontColor: "#9090b0", 
+      labelFontSize: 11, 
+      labelFontFamily: "Space Grotesk",
+      tickColor: "transparent",
+    },
+    axisY: { 
+      labelFontColor: "#55556a", 
+      gridColor: "rgba(255,255,255,0.05)", 
+      prefix: "$",
+      margin: 20,
+    },
+    data: [
+      {
+        type: "column",
+        color: "#8b5cf6", 
+        indexLabel: "${y}",
+        indexLabelFontColor: "#fff",
+        indexLabelFontSize: 13,
+        indexLabelPlacement: "outside", 
+        dataPoints: filteredData,
+      },
+    ],
+  };
+
   return (
-    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-5 animate-fade-up h-full">
-      <div className="mb-4">
-        <div className="font-['Space_Grotesk'] text-[15px] font-semibold text-white">
-          Performa Kategori
+    <div className="bg-[#1a1a2e] border border-purple-900/20 rounded-xl p-6 h-full flex flex-col">
+      <div className="mb-6 shrink-0">
+        <div className="font-['Space_Grotesk'] text-[16px] font-semibold text-white">
+          {filters.category ? `Analisis: ${filters.category}` : "Investasi per Sektor"}
         </div>
-        <div className="text-[11px] text-[#55556a] mt-0.5">
-          Distribusi tersegmentasi di seluruh sektor
-        </div>
+        <div className="text-[11px] text-[#55556a] mt-0.5">Filter aktif untuk periode terpilih</div>
       </div>
-
-      <div className="flex flex-col gap-4">
-        {categories.map((cat) => (
-          <div key={cat.name}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold tracking-widest uppercase text-[#9090b0]">
-                {cat.name}
-              </span>
-              <span className="text-[12px] font-semibold text-white">
-                {cat.pct}%
-              </span>
-            </div>
-            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-1000"
-                style={{
-                  width: `${cat.pct}%`,
-                  background: cat.color,
-                  boxShadow: `0 0 8px ${cat.glow}`,
-                }}
-              />
-            </div>
+      
+      <div className="relative flex-1" style={{ height: "350px" }}>
+        {filteredData.length > 0 ? (
+          <CanvasJSChart options={options} />
+        ) : (
+          <div className="h-full flex items-center justify-center text-[#55556a] text-xs">
+            Tidak ada data untuk periode ini
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
