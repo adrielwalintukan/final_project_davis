@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # Impor semua router
-from routers import metrics, charts, campaigns, metadata
+from routers import metrics, charts, campaigns, metadata, ai
 
 app = FastAPI(title="Ad Campaign Intelligence API")
 
@@ -21,6 +21,7 @@ app.include_router(metrics.router)
 app.include_router(charts.router)
 app.include_router(campaigns.router)
 app.include_router(metadata.router)
+app.include_router(ai.router)
 
 @app.get("/")
 async def root():

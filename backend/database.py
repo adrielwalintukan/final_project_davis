@@ -7,6 +7,10 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    # Fallback to local sqlite if .env is missing or DATABASE_URL is not set
+    DATABASE_URL = "sqlite+aiosqlite:///./database/ad_campaign_db.sqlite"
+
 engine = create_async_engine(DATABASE_URL, echo=True)
 AsyncSessionLocal = sessionmaker(
     bind=engine,
