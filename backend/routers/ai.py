@@ -1,4 +1,5 @@
 import os
+import re
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/api/ai", tags=["AI Analyst"])
 
 class ChatRequest(BaseModel):
     message: str
+    model: str = "gemma-3-27b-it"
     context: dict = None
 
 async def get_system_context(db: AsyncSession):
@@ -33,11 +35,9 @@ async def get_system_context(db: AsyncSession):
         # Dashboard context
         dashboard_info = """
         Dashboard Features:
-        - Sales Trend: Chart showing Click vs Purchase over time.
-        - Category Performance: Bar chart showing total budget spent per ad type.
-        - Platform Distribution: Pie chart showing count of ads per platform.
-        - Metric Cards: Real-time display of Total Campaigns, Total Budget, and Event counts.
-        - Performance Insights: Calculating Click-Through Rate (CTR = Clicks/Impressions) and Conversion Rate (CVR = Purchases/Clicks).
+        - Command Deck: Main dashboard with metric cards, pie charts for platforms, bar charts for categories, and sales trends.
+        - Campaign Insights: A page to view details, metrics (CTR, CVR), and platform breakdowns per specific campaign.
+        - Archives: A complete, searchable, and sortable table of all historical campaigns.
         """
 
         campaign_count = await db.scalar(text("SELECT COUNT(*) FROM campaigns"))
@@ -69,9 +69,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     try:
         genai.configure(api_key=api_key)
         
-        # Menggunakan model permintaan Anda yang lain
-        model_name = 'gemma-3-27b-it'
-        model = genai.GenerativeModel(model_name)
+        model = genai.GenerativeModel(request.model)
 
         system_context = await get_system_context(db)
         
@@ -86,17 +84,24 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
         2. Menjelaskan insight yang bisa diambil dari dashboard (seperti tren penjualan, performa platform, atau segmentasi target).
         3. Jika user bertanya tentang cara kerja dashboard, jelaskan fitur-fitur yang ada (Sales Trend, Category Performance, dll).
         
-        ATURAN RESPON:
-        - DILARANG KERAS menggunakan tanda bintang ganda (**) untuk menebalkan teks.
-        - Jika user hanya menyapa (hai/halo/apa kabar): Balas dengan ramah dan tawarkan bantuan secara singkat (max 1-2 kalimat).
-        - Jika user bertanya tentang data/analisis: DILARANG memberikan salam pembuka atau basa-basi. LANGSUNG berikan poin-poin datanya.
-        - Format: Rapi, gunakan bullet points untuk data, dan spasi yang jelas.
-        
-        CONTOH RESPON ANALISIS (TANPA BASA-BASI):
-        User: "Analisis performa"
-        AI: "Berikut data performa Anda:
-        - Total Kampanye: 50
-        - CVR: 5%"
+        ATURAN RESPON (WAJIB DIPATUHI):
+        - DILARANG KERAS menggunakan simbol Markdown: **, *, ##, #, _, >, ```
+        - Tulis jawaban dalam paragraf biasa yang natural dan mudah dibaca.
+        - Gunakan tanda hubung (-) HANYA jika memang ada daftar item (lebih dari 2 item). Setiap item daftar WAJIB berada di baris baru yang terpisah.
+        - JANGAN memaksakan penggunaan tanda (-) jika jawabannya bisa ditulis dalam kalimat biasa.
+        - Jika user hanya menyapa: Balas singkat, ramah, 1-2 kalimat saja.
+        - Jika user bertanya data/analisis: Langsung ke poinnya, tanpa basa-basi pembuka.
+        - Pisahkan bagian yang berbeda dengan baris kosong agar mudah dibaca.
+
+        CONTOH RESPON YANG BENAR:
+        User: "Apa itu CTR?"
+        AI: "CTR (Click-Through Rate) adalah persentase orang yang mengklik iklan setelah melihatnya. Dihitung dengan rumus: Klik dibagi Impresi dikali 100."
+
+        User: "Platform mana yang paling banyak dipakai?"
+        AI: "Berikut distribusi platform berdasarkan data:
+        - Facebook: 1.200 iklan
+        - Instagram: 980 iklan
+        - Google: 750 iklan"
         
         PERTANYAAN USER: {request.message}
         """
@@ -104,7 +109,27 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
         response = model.generate_content(prompt)
         
         if response and response.candidates:
-            clean_response = response.text.replace("**", "")
+            clean_response = response.text
+
+            # === STRIP semua simbol Markdown ===
+            # LANGKAH 1: Hapus heading: ## Judul -> Judul
+            clean_response = re.sub(r'^#{1,6}\s*', '', clean_response, flags=re.MULTILINE)
+            # LANGKAH 2: Konversi bullet * ke - LEBIH DULU (sebelum bold stripper)
+            clean_response = re.sub(r'^\*\s+', '- ', clean_response, flags=re.MULTILINE)
+            # LANGKAH 3: Hapus bold/italic: **teks** / *teks* (hanya yang berpasangan)
+            clean_response = re.sub(r'\*\*(.*?)\*\*', r'\1', clean_response)
+            clean_response = re.sub(r'\*(.*?)\*', r'\1', clean_response)
+            clean_response = re.sub(r'__(.*?)__', r'\1', clean_response)
+            clean_response = re.sub(r'_(.*?)_', r'\1', clean_response)
+            # LANGKAH 4: Hapus backtick inline/block
+            clean_response = re.sub(r'```[\s\S]*?```', '', clean_response)
+            clean_response = re.sub(r'`([^`]*)`', r'\1', clean_response)
+            # LANGKAH 5: Hapus blockquote
+            clean_response = re.sub(r'^>\s*', '', clean_response, flags=re.MULTILINE)
+            # LANGKAH 6: Catch-all — hapus * yang masih tersisa di awal baris
+            clean_response = re.sub(r'^\*+\s*', '', clean_response, flags=re.MULTILINE)
+            # LANGKAH 7: Rapikan baris kosong berlebih
+            clean_response = re.sub(r'\n{3,}', '\n\n', clean_response).strip()
             
             # Programmatic cleaning for greetings/intros
             bad_intros = [

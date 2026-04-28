@@ -9,6 +9,8 @@ import CategoryPerformance from "./components/CategoryPerformance";
 import CampaignDistributionPie from "./components/CampaignDistributionPie";
 import RecentCampaigns from "./components/RecentCampaigns";
 import AIAnalyst from "./components/AIAnalyst";
+import CampaignInsights from "./components/CampaignInsights";
+import Archives from "./components/Archives";
 
 function App() {
   const [activeNav, setActiveNav] = useState("command");
@@ -80,22 +82,30 @@ function App() {
     <div className="flex h-screen w-full bg-[#0f0f1a] text-white overflow-hidden">
       <Sidebar activeNav={activeNav} onNavChange={setActiveNav} />
       <div className="flex-1 flex flex-col overflow-hidden bg-[#0f0f1a]">
-        <Header onFilterChange={(newFilters) => setFilters(newFilters)} />
+        {/* Header hanya tampil di Command Deck */}
+        {activeNav === "command" && (
+          <Header onFilterChange={(newFilters) => setFilters(newFilters)} />
+        )}
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto scrollbar-hide p-5 flex flex-col gap-4">
-            <div className="grid grid-cols-4 gap-3.5">
-              {metricCards.map((m) => (
-                <MetricCard key={m.label} {...m} />
-              ))}
+          {/* Main content area */}
+          {activeNav === "command" && (
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-5 flex flex-col gap-4">
+              <div className="grid grid-cols-4 gap-3.5">
+                {metricCards.map((m) => (
+                  <MetricCard key={m.label} {...m} />
+                ))}
+              </div>
+              <div className="grid gap-3.5 items-stretch" style={{ gridTemplateColumns: "1fr 0.9fr" }}>
+                <CampaignDistributionPie filters={filters} />
+                <CategoryPerformance filters={filters} />
+              </div>
+              <SalesTrendChart filters={filters} />
+              <RecentCampaigns filters={filters} />
             </div>
-            <div className="grid gap-3.5 items-stretch" style={{ gridTemplateColumns: "1fr 0.9fr" }}>
-              <CampaignDistributionPie filters={filters} />
-              <CategoryPerformance filters={filters} />
-            </div>
-            <SalesTrendChart filters={filters} />
-            <RecentCampaigns filters={filters} />
-          </div>
-          <AIAnalyst />
+          )}
+          {activeNav === "insights" && <CampaignInsights />}
+          {activeNav === "archives" && <Archives />}
+          <AIAnalyst filters={filters} metrics={metrics} />
         </div>
       </div>
     </div>

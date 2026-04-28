@@ -10,13 +10,7 @@ const navItems = [
     id: "command",
     label: "Command Deck",
     icon: (
-      <svg
-        className="w-4 h-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
+      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="3" width="7" height="7" />
         <rect x="14" y="3" width="7" height="7" />
         <rect x="14" y="14" width="7" height="7" />
@@ -28,30 +22,8 @@ const navItems = [
     id: "insights",
     label: "Campaign Insights",
     icon: (
-      <svg
-        className="w-4 h-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 8v4l3 3" />
-      </svg>
-    ),
-  },
-  {
-    id: "streams",
-    label: "Data Streams",
-    icon: (
-      <svg
-        className="w-4 h-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M2 20h20M6 20V10M12 20V4M18 20v-8" />
       </svg>
     ),
   },
@@ -59,33 +31,10 @@ const navItems = [
     id: "archives",
     label: "Archives",
     icon: (
-      <svg
-        className="w-4 h-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
+      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <polyline points="21 8 21 21 3 21 3 8" />
         <rect x="1" y="3" width="22" height="5" />
         <line x1="10" y1="12" x2="14" y2="12" />
-      </svg>
-    ),
-  },
-  {
-    id: "config",
-    label: "System Configuration",
-    icon: (
-      <svg
-        className="w-4 h-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <line x1="4" y1="6" x2="20" y2="6" />
-        <line x1="8" y1="12" x2="20" y2="12" />
-        <line x1="12" y1="18" x2="20" y2="18" />
       </svg>
     ),
   },
@@ -127,6 +76,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavChange }) => {
           </button>
         ))}
       </nav>
+
+      {/* Footer */}
+      <div className="px-4 pt-4 border-t border-purple-900/20 mt-3">
+        <p className="text-[9px] text-[#55556a] tracking-widest uppercase">v1.0.0 · Final Project</p>
+      </div>
     </aside>
   );
 };
