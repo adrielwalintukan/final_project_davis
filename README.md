@@ -54,7 +54,7 @@ A modern, highly-interactive web application built to analyze and monitor advert
    source venv/bin/activate
    
    # Untuk Windows:
-   venv\Scripts\activate
+   .venv\Scripts\activate
    ```
 3. Install semua *dependencies*:
    ```bash
