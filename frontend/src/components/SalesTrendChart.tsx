@@ -8,7 +8,7 @@ interface Props {
 }
 
 const SalesTrendChart: React.FC<Props> = ({ filters }) => {
-  const [activeTab, setActiveTab] = useState<"clicks" | "purchases">("clicks");
+  const [activeTab, setActiveTab] = useState<"clicks" | "purchases" | "all">("clicks");
   const [chartData, setChartData] = useState<any>(null);
   const [opacity, setOpacity] = useState(1);
 
@@ -27,27 +27,55 @@ const SalesTrendChart: React.FC<Props> = ({ filters }) => {
         console.error("Gagal mengambil data tren:", err);
         setOpacity(1);
       });
-  }, [filters, activeTab]);
+  }, [filters]); // Tidak perlu refetch saat ganti tab karena data sudah mencakup keduanya
 
   const options = {
     backgroundColor: "transparent",
     theme: "dark2",
     animationEnabled: true,
     animationDuration: 1000,
+    legend: {
+      cursor: "pointer",
+      fontColor: "#9090b0",
+      fontSize: 11,
+      verticalAlign: "top",
+      horizontalAlign: "center",
+      dockInsidePlotArea: true,
+    },
     axisX: {
       title: "Tren Aktivitas",
       titleFontColor: "#9090b0",
+      titleFontSize: 13,
+      titleMargin: 2, // Lebih dekat ke label agar tidak terlalu bawah
       labelFontColor: "#55556a",
+      labelFontSize: 10,
       interval: filters.startDate === filters.endDate ? 5 : 7, 
       labelAngle: -45,
     },
     axisY: {
-      title: activeTab === "clicks" ? "Klik" : "Konversi",
+      title: activeTab === "all" ? "Klik & Konversi" : activeTab === "clicks" ? "Klik" : "Konversi",
       titleFontColor: "#9090b0",
       labelFontColor: "#55556a",
       gridColor: "rgba(255,255,255,0.05)",
     },
-    data: [
+    data: activeTab === "all" ? [
+      {
+        type: "splineArea",
+        name: "Klik",
+        showInLegend: true,
+        color: "#8b5cf6",
+        fillOpacity: 0.1,
+        dataPoints: chartData ? chartData.clicks : [],
+      },
+      {
+        type: "splineArea",
+        name: "Pembelian",
+        showInLegend: true,
+        color: "#22d3ee",
+        fillOpacity: 0.1,
+        dataPoints: chartData ? chartData.purchases : [],
+      }
+    ] : [
       {
         type: "splineArea",
         name: activeTab === "clicks" ? "Klik" : "Pembelian",
@@ -66,14 +94,14 @@ const SalesTrendChart: React.FC<Props> = ({ filters }) => {
           <div className="text-[11px] text-[#55556a] mt-0.5">Menampilkan tren periode terkait</div>
         </div>
         <div className="flex bg-[#14141f] border border-purple-900/20 rounded-lg p-0.5">
-          {(['clicks', 'purchases'] as const).map((t) => (
+          {(['clicks', 'purchases', 'all'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
               className={`px-4 py-1.5 rounded-md text-[11px] font-medium capitalize transition-all duration-300 cursor-pointer
                 ${activeTab === t ? 'bg-[#1a1a2e] text-violet-400 shadow-sm' : 'text-[#9090b0] hover:text-white'}`}
             >
-              {t === 'clicks' ? 'Klik' : 'Konversi'}
+              {t === 'clicks' ? 'Klik' : t === 'purchases' ? 'Konversi' : 'Gabungan'}
             </button>
           ))}
         </div>
