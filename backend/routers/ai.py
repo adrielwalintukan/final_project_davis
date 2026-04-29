@@ -40,18 +40,20 @@ async def get_system_context(db: AsyncSession):
         - Archives: A complete, searchable, and sortable table of all historical campaigns.
         """
 
-        campaign_count = await db.scalar(text("SELECT COUNT(*) FROM campaigns"))
-        total_budget = await db.scalar(text("SELECT SUM(total_budget) FROM campaigns"))
-        budget_str = f"${total_budget:,.2f}" if total_budget else "$0.00"
+        campaign_count = await db.scalar(text("SELECT COUNT(*) FROM campaigns")) or 0
+        total_budget = await db.scalar(text("SELECT SUM(total_budget) FROM campaigns")) or 0
+        budget_str = f"${total_budget:,.2f}"
         
         event_res = await db.execute(text("SELECT event_type, COUNT(*) FROM ad_events GROUP BY event_type"))
-        events = {row[0]: row[1] for row in event_res.all()}
+        events_list = event_res.all()
+        events = {row[0]: row[1] for row in events_list} if events_list else {}
         
         data_summary = f"Data Summary: {campaign_count} Kampanye, Budget {budget_str}, Metrik {events}"
         
         return f"{schema_info}\n{dashboard_info}\n{data_summary}"
     except Exception as e:
-        return f"Context error: {str(e)}"
+        print(f"Context error: {str(e)}")
+        return "Context error: Gagal mengambil data terbaru dari database."
 
 @router.post("/chat")
 async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
@@ -69,7 +71,17 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     try:
         genai.configure(api_key=api_key)
         
-        model = genai.GenerativeModel(request.model)
+        # Fallback jika model tidak dikenal atau terjadi error konfigurasi
+        current_model_name = request.model if request.model else "gemini-1.5-flash"
+        
+        # Tambahkan prefix 'models/' jika belum ada
+        if not current_model_name.startswith("models/"):
+            # Beberapa model lama mungkin tidak butuh, tapi untuk Gemma/Gemini terbaru biasanya lebih aman pakai prefix
+            # Kita cek dulu apakah ini model gemma atau gemini yang umum
+            if any(x in current_model_name for x in ["gemini", "gemma", "learnlm"]):
+                current_model_name = f"models/{current_model_name}"
+        
+        model = genai.GenerativeModel(current_model_name)
 
         system_context = await get_system_context(db)
         
@@ -152,7 +164,9 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
         return {"response": "AI tidak memberikan respon. Coba model lain atau cek kuota API.", "role": "ai"}
 
     except Exception as e:
+        error_msg = str(e)
+        print(f"AI Chat Error: {error_msg}")
         return {
-            "response": f"Gagal memanggil {model_name}: {str(e)}",
+            "response": f"Gagal memanggil model {request.model}: {error_msg}",
             "role": "ai"
         }

@@ -23,6 +23,11 @@ const CategoryPerformance: React.FC<Props> = ({ filters }) => {
     ? data.filter(item => item.label === filters.category)
     : data;
 
+  // Hitung nilai maksimum untuk memberikan ruang di atas bar agar label tidak nabrak
+  const maxY = filteredData.length > 0 ? Math.max(...filteredData.map(d => d.y)) : 0;
+  const axisYMax = maxY > 0 ? maxY * 1.2 : undefined; // Tambahkan 20% ruang di atas
+
+
   const options = {
     animationEnabled: true,
     animationDuration: 600,
@@ -39,6 +44,8 @@ const CategoryPerformance: React.FC<Props> = ({ filters }) => {
       gridColor: "rgba(255,255,255,0.05)", 
       prefix: "$",
       margin: 20,
+      maximum: axisYMax, // Set maximum dinamis
+      includeZero: false,
     },
     data: [
       {
@@ -46,8 +53,10 @@ const CategoryPerformance: React.FC<Props> = ({ filters }) => {
         color: "#8b5cf6", 
         indexLabel: "${y}",
         indexLabelFontColor: "#fff",
-        indexLabelFontSize: 13,
+        indexLabelFontSize: 12,
+        indexLabelFontWeight: "bold",
         indexLabelPlacement: "outside", 
+        indexLabelMargin: 8, // Beri jarak dari atas bar
         dataPoints: filteredData,
       },
     ],
